@@ -13,7 +13,7 @@ import java.util.List;
 public class Category extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private Long id;
     @Column
     private String name;
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)

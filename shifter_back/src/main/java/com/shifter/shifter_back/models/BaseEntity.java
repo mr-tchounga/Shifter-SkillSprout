@@ -24,19 +24,19 @@ import java.util.Date;
 @MappedSuperclass
 public class BaseEntity {
     @CreatedBy
-    protected String createdBy;
+    protected Long createdBy;
 
     @JsonFormat(pattern = "dd/MM/yyyy HH:m:ss", timezone = "GMT+1")
     @CreatedDate
-    protected Date createdDate;
+    protected Date createdAt;
 
     @LastModifiedBy
-    protected String updatedBy;
+    protected Long updatedBy;
 
     @JsonFormat(pattern = "dd/MM/yyyy HH:m:ss", timezone = "GMT+1")
     @LastModifiedDate
-    protected Date updatedDate;
+    protected Date updatedAt;
 
     @Column
-    protected boolean status = true;
+    protected boolean isVisible = true;
 }

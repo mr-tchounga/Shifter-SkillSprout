@@ -14,7 +14,7 @@ import java.util.List;
 public class Question extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private Long id;
     @Column
     private String name;
     @Column
