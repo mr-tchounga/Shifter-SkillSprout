@@ -17,8 +17,8 @@ import java.util.Date;
 @Getter
 @Setter
 @ToString
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 @SuperBuilder
 @EntityListeners(AuditingEntityListener.class)
 @MappedSuperclass

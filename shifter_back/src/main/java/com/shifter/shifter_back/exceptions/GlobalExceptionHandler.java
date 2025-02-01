@@ -1,0 +1,109 @@
+package com.shifter.shifter_back.exceptions;
+
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.SignatureException;
+import jakarta.persistence.EntityNotFoundException;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import java.util.HashMap;
+import java.util.Map;
+
+@Slf4j
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+
+    /**
+     * 🛑 Handle validation errors (missing fields, invalid data)
+     */
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, String>> handleValidationExceptions(MethodArgumentNotValidException ex) {
+        Map<String, String> errors = new HashMap<>();
+        ex.getBindingResult().getFieldErrors().forEach(error -> errors.put(error.getField(), error.getDefaultMessage()));
+
+        String logMessage = "Validation Error: " + errors;
+        log.error(logMessage);
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                "error", "Validation Failed",
+                "message", logMessage
+        ));
+    }
+
+    /**
+     * 🔒 Handle authentication errors (bad credentials, access denied)
+     */
+    @ExceptionHandler({BadCredentialsException.class, AccessDeniedException.class})
+    public ResponseEntity<Map<String, String>> handleAuthExceptions(Exception ex) {
+        String logMessage = "Authentication Error: " + ex.getMessage();
+        log.warn(logMessage);
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
+                "error", "Authentication Failed",
+                "message", logMessage
+        ));
+    }
+
+    /**
+     * 🛑 Handle JWT token errors (expired, malformed, invalid signature)
+     */
+    @ExceptionHandler({ExpiredJwtException.class, MalformedJwtException.class, SignatureException.class})
+    public ResponseEntity<Map<String, String>> handleJwtExceptions(Exception ex) {
+        String logMessage = "JWT Error: " + ex.getMessage();
+        log.warn(logMessage);
+
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                "error", "Invalid Token",
+                "message", logMessage
+        ));
+    }
+
+    /**
+     * 🔍 Handle entity errors (user/resource not found, already exists)
+     */
+    @ExceptionHandler({EntityNotFoundException.class, ResourceNotFoundException.class, UserAlreadyExistException.class})
+    public ResponseEntity<Map<String, String>> handleEntityExceptions(RuntimeException ex) {
+        String logMessage = "Entity Error: " + ex.getMessage();
+        log.warn(logMessage);
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                "error", "Resource Not Found",
+                "message", logMessage
+        ));
+    }
+
+    /**
+     * ⚠️ Handle general exceptions (NPE, IllegalArgumentException)
+     */
+    @ExceptionHandler({NullPointerException.class, IllegalArgumentException.class})
+    public ResponseEntity<Map<String, String>> handleGeneralExceptions(Exception ex) {
+        String logMessage = "General Error: " + ex.getMessage();
+        log.error(logMessage, ex);
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                "error", "Internal Server Error",
+                "message", logMessage
+        ));
+    }
+
+    /**
+     * 🌍 Handle unexpected exceptions (log actual error message instead of generic)
+     */
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Map<String, String>> handleAllExceptions(Exception ex) {
+        String logMessage = "Unexpected Error: " + ex.getMessage();
+        log.error(logMessage, ex);
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                "error", "Unexpected Error",
+                "message", logMessage
+        ));
+    }
+}

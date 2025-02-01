@@ -1,22 +1,25 @@
 package com.shifter.shifter_back.models;
 
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 
-@EqualsAndHashCode(callSuper = true)
-@Entity
 @Table(name = "users")
+@EqualsAndHashCode(callSuper = true)
 @Data
+@SuperBuilder
+@AllArgsConstructor
+@NoArgsConstructor
+@Entity
 public class User extends BaseEntity implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-//    @Column
+    //    @Column
 //    private String firstname;
 //    @Column
 //    private String lastname;
@@ -30,7 +33,7 @@ public class User extends BaseEntity implements UserDetails {
     private String password;
     @Column
     private String picture;
-//    @Column
+    //    @Column
 //    private String gamification;
     @Column
     private String score;
@@ -44,11 +47,16 @@ public class User extends BaseEntity implements UserDetails {
     @Column(name = "is_credential_expired")
     private boolean isCredentialExpired = false;
     @Column(name = "is_enabled")
-    private boolean isEnabled = true;
+    private boolean isEnabled;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return null;
+    }
+
+    @Override
+    public String getPassword() {
+        return this.password;
     }
 
     @Override
@@ -76,3 +84,6 @@ public class User extends BaseEntity implements UserDetails {
         return this.isEnabled;
     }
 }
+
+
+
