@@ -1,5 +1,6 @@
 package com.shifter.shifter_back.models;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -29,6 +30,7 @@ public class User extends BaseEntity implements UserDetails {
     private String email;
     @Column
     private String phone;
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @Column(nullable = false)
     private String password;
     @Column
@@ -40,12 +42,16 @@ public class User extends BaseEntity implements UserDetails {
     @Column
     private String scored;
 
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @Column(name = "is_expired")
     private boolean isExpired = false;
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @Column(name = "is_locked")
     private boolean isLocked = false;
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @Column(name = "is_credential_expired")
     private boolean isCredentialExpired = false;
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @Column(name = "is_enabled")
     private boolean isEnabled;
 

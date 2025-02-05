@@ -148,9 +148,16 @@ public class AuthController {
 
     @GetMapping("/me")
     @Operation(summary = "Get current user", tags = "Auth")
-    public User getCurrentUser(@RequestHeader String token) {
+    public User getCurrentUser(@RequestHeader("Authorization") String token) {
         String jwtToken = token.substring(7);
         return authService.getCurrentUserFromToken(jwtToken);
+    }
+
+    @GetMapping("/signout")
+    @Operation(summary = "User signout", tags = "Auth")
+    public ResponseEntity<JwtAuthenticationResponse> signout(@RequestHeader("Authorization") String token) {
+        authService.logout(getCurrentUser(token));
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
 }

@@ -29,11 +29,11 @@ public class GlobalExceptionHandler {
         ex.getBindingResult().getFieldErrors().forEach(error -> errors.put(error.getField(), error.getDefaultMessage()));
 
         String logMessage = "Validation Error: " + errors;
-        log.error(logMessage);
+        log.error(logMessage, ex);
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
                 "error", "Validation Failed",
-                "message", logMessage
+                "details", errors.toString()
         ));
     }
 
@@ -43,11 +43,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({BadCredentialsException.class, AccessDeniedException.class})
     public ResponseEntity<Map<String, String>> handleAuthExceptions(Exception ex) {
         String logMessage = "Authentication Error: " + ex.getMessage();
-        log.warn(logMessage);
+        log.warn(logMessage, ex);
 
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
                 "error", "Authentication Failed",
-                "message", logMessage
+                "message", ex.getMessage()
         ));
     }
 
@@ -57,11 +57,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({ExpiredJwtException.class, MalformedJwtException.class, SignatureException.class})
     public ResponseEntity<Map<String, String>> handleJwtExceptions(Exception ex) {
         String logMessage = "JWT Error: " + ex.getMessage();
-        log.warn(logMessage);
+        log.warn(logMessage, ex);
 
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
                 "error", "Invalid Token",
-                "message", logMessage
+                "message", ex.getMessage()
         ));
     }
 
@@ -71,11 +71,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({EntityNotFoundException.class, ResourceNotFoundException.class, UserAlreadyExistException.class})
     public ResponseEntity<Map<String, String>> handleEntityExceptions(RuntimeException ex) {
         String logMessage = "Entity Error: " + ex.getMessage();
-        log.warn(logMessage);
+        log.warn(logMessage, ex);
 
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
                 "error", "Resource Not Found",
-                "message", logMessage
+                "message", ex.getMessage()
         ));
     }
 
@@ -89,7 +89,7 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
                 "error", "Internal Server Error",
-                "message", logMessage
+                "message", ex.getMessage() != null ? ex.getMessage() : "Unexpected error occurred"
         ));
     }
 
@@ -106,4 +106,5 @@ public class GlobalExceptionHandler {
                 "message", logMessage
         ));
     }
+
 }

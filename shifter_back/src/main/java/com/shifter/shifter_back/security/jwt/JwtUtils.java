@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
+import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
 
@@ -48,17 +49,41 @@ public class JwtUtils {
         }
     }
 
-    public String getEmailFromJwtToken(String token) {
-        return Jwts.parserBuilder().setSigningKey(key()).build()
-                .parseClaimsJws(token).getBody().getSubject();
-    }
     public String generateTokenFromEmail(String email) {
-        return Jwts.builder().setClaims(new HashMap<>())
-                .setSubject(email).setIssuedAt(new Date())
-                .setExpiration(new Date((new Date()).getTime() + Long.parseLong(jwtExpirationMs)))
-                .signWith(key(), SignatureAlgorithm.HS512)
-                .compact();
+        Instant now = Instant.now();
+        Instant expiration = now.plusMillis(Long.parseLong(jwtExpirationMs));
+
+        try {
+            return Jwts.builder()
+                    .setSubject(email)
+                    .setIssuedAt(Date.from(now))
+                    .setExpiration(Date.from(expiration))
+                    .signWith(SignatureAlgorithm.HS512, jwtSecret)
+                    .compact();
+        } catch (IllegalArgumentException e) {
+            log.error("JWT generation failed: Invalid argument", e);
+            throw e;  // Re-throw or handle appropriately
+        }
     }
+
+
+    public String getEmailFromJwtToken(String token) {
+        try {
+            return Jwts.parserBuilder().setSigningKey(key()).build()
+                    .parseClaimsJws(token).getBody().getSubject();
+        } catch (ExpiredJwtException e) {
+            throw new IllegalArgumentException("JWT Token is expired!", e);
+        } catch (MalformedJwtException e) {
+            throw new IllegalArgumentException("Malformed JWT Token!", e);
+        } catch (UnsupportedJwtException e) {
+            throw new IllegalArgumentException("JWT Token is unsupported!", e);
+        } catch (SignatureException e) {
+            throw new IllegalArgumentException("Invalid JWT signature!", e);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Invalid JWT Token!", e);
+        }
+    }
+
     public boolean validateJwtToken(String authToken) {
         try {
             Jwts.parserBuilder().setSigningKey(key()).build().parseClaimsJwt(authToken);

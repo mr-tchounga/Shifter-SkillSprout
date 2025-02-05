@@ -2,7 +2,7 @@ package com.shifter.shifter_back.services.auth;
 
 import com.shifter.shifter_back.exceptions.ResourceNotFoundException;
 import com.shifter.shifter_back.models.User;
-import com.shifter.shifter_back.repositories.UserRepository;
+import com.shifter.shifter_back.repositories.auth.UserRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;

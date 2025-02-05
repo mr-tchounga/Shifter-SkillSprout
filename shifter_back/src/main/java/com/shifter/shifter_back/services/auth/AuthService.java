@@ -11,7 +11,7 @@ public interface AuthService {
 //    public JwtAuthenticationResponse createUser(SignupRequest request, UserMachineDetails userMachineDetails);
     public JwtAuthenticationResponse signIn(SigninRequest request, UserMachineDetails userMachineDetails);
     public JwtAuthenticationResponse refreshToken(TokenRefreshRequest request);
-    public void logout();
+    public void logout(User user);
     public PasswordResetToken forgotPassword(String email);
     public boolean isResetTokenValid(String token);
     public User resetPassword(ForgotPassword forgotPassword);

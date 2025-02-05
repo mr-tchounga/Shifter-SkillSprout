@@ -10,7 +10,7 @@ import com.shifter.shifter_back.models.auth.RefreshToken;
 import com.shifter.shifter_back.payloads.requests.*;
 import com.shifter.shifter_back.payloads.responses.JwtAuthenticationResponse;
 import com.shifter.shifter_back.payloads.responses.UserMachineDetails;
-import com.shifter.shifter_back.repositories.UserRepository;
+import com.shifter.shifter_back.repositories.auth.UserRepository;
 import com.shifter.shifter_back.repositories.auth.PasswordTokenRepository;
 import com.shifter.shifter_back.security.jwt.JwtUtils;
 import lombok.RequiredArgsConstructor;
@@ -106,14 +106,7 @@ public class authServiceImpl implements AuthService {
     }
 
     @Override
-    public void logout() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        Object principal = authentication.getPrincipal();
-
-        if (authentication instanceof AnonymousAuthenticationToken || principal == null) {
-            throw new BadRequestException("You are not logged in");
-        }
-        User user = (User) principal;
+    public void logout(User user) {
         refreshTokenService.deleteByUserId(user.getId());
     }
 
@@ -161,7 +154,7 @@ public class authServiceImpl implements AuthService {
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(user.getEmail(), passwordReset.getPassword()));
         user.setPassword(passwordEncoder.encode(passwordReset.getPassword()));
         User updatedUser = userRepository.save(user);
-        this.logout();
+        this.logout(user);
         return updatedUser;
     }
 

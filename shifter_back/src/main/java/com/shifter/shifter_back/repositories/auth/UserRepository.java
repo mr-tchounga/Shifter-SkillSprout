@@ -1,4 +1,4 @@
-package com.shifter.shifter_back.repositories;
+package com.shifter.shifter_back.repositories.auth;
 
 import com.shifter.shifter_back.models.User;
 import org.springframework.data.jpa.repository.JpaRepository;

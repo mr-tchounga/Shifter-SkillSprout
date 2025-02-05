@@ -2,7 +2,7 @@
 //
 //import com.shifter.shifter_back.models.User;
 //import com.shifter.shifter_back.models.User;
-//import com.shifter.shifter_back.repositories.UserRepository;
+//import com.shifter.shifter_back.repositories.auth.UserRepository;
 //import com.shifter.shifter_back.utils.Utils;
 //import jakarta.transaction.Transactional;
 //import lombok.AllArgsConstructor;
