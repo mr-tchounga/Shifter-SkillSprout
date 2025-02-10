@@ -5,8 +5,8 @@ import com.shifter.shifter_back.models.User;
 import com.shifter.shifter_back.models.auth.RefreshToken;
 import com.shifter.shifter_back.payloads.responses.UserMachineDetails;
 import com.shifter.shifter_back.repositories.auth.RefreshTokenRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +15,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Service
+@Transactional
 @RequiredArgsConstructor
 public class RefreshTokenServiceImpl implements RefreshTokenService {
     @Value("${token.refresh.expiration}")
@@ -34,7 +35,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         RefreshToken refreshToken = RefreshToken
                 .builder()
                 .token(UUID.randomUUID().toString())
-                .user(user)
+                .userId(user.getId())
                 .expiryDate(Instant.now().plusMillis(refreshTokenDurationMs))
                 .ipAddress(userMachineDetails.getIpAddress())
                 .browser(userMachineDetails.getBrowser())
@@ -53,6 +54,6 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
 
     @Override
     public void deleteByUserId(Long userId) {
-        refreshTokenRepository.deleteByUser(userService.findById(userId));
+        refreshTokenRepository.deleteByUser(userService.findById(userId).getId());
     }
 }

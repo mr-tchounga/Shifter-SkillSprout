@@ -25,6 +25,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.thymeleaf.context.Context;
 
+import java.util.Map;
+
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -155,9 +157,11 @@ public class AuthController {
 
     @GetMapping("/signout")
     @Operation(summary = "User signout", tags = "Auth")
-    public ResponseEntity<JwtAuthenticationResponse> signout(@RequestHeader("Authorization") String token) {
-        authService.logout(getCurrentUser(token));
-        return new ResponseEntity<>(HttpStatus.OK);
+    public ResponseEntity<Map<String, String>> signout(@RequestHeader("Authorization") String token) {
+        String jwtToken = token.substring(7);
+        authService.signOut(jwtToken);
+        return ResponseEntity
+                    .status(HttpStatus.OK)
+                    .body(Map.of("message", "Log out successful."));
     }
-
 }

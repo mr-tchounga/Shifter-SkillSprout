@@ -10,6 +10,7 @@ import com.shifter.shifter_back.models.auth.RefreshToken;
 import com.shifter.shifter_back.payloads.requests.*;
 import com.shifter.shifter_back.payloads.responses.JwtAuthenticationResponse;
 import com.shifter.shifter_back.payloads.responses.UserMachineDetails;
+import com.shifter.shifter_back.repositories.auth.RefreshTokenRepository;
 import com.shifter.shifter_back.repositories.auth.UserRepository;
 import com.shifter.shifter_back.repositories.auth.PasswordTokenRepository;
 import com.shifter.shifter_back.security.jwt.JwtUtils;
@@ -22,6 +23,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
@@ -36,6 +38,7 @@ public class authServiceImpl implements AuthService {
     private final AuthenticationManager authenticationManager;
     private final RefreshTokenService refreshTokenService;
     private final PasswordTokenRepository passwordTokenRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     @Override
     public JwtAuthenticationResponse signUp(SignupRequest request, UserMachineDetails userMachineDetails) {
@@ -97,17 +100,29 @@ public class authServiceImpl implements AuthService {
 
         return refreshTokenService.findByToken(requestRefreshToken)
                 .map(refreshTokenService::verifyExpiration)
-                .map(RefreshToken::getUser)
-                .map((user) -> {
-                    String token = jwtUtils.generateTokenFromEmail(user.getEmail());
-                    return JwtAuthenticationResponse.builder().token(token).user(user).refreshToken(requestRefreshToken).build();
+                .map(RefreshToken::getUserId)
+                .map((userId) -> {
+                    Optional<User> user = userRepository.findById(userId);
+                    if (user.isEmpty()) {
+                        throw new ResourceNotFoundException("User not found for id: " + userId);
+                    }
+                    String token = jwtUtils.generateTokenFromEmail(user.get().getEmail());
+                    return JwtAuthenticationResponse.builder().token(token).user(user.get()).refreshToken(requestRefreshToken).build();
                 })
                 .orElseThrow(() -> new TokenRefreshException(requestRefreshToken, "Refresh token is not in database"));
     }
 
     @Override
-    public void logout(User user) {
-        refreshTokenService.deleteByUserId(user.getId());
+    public void signOut(String token) {
+            User user = getCurrentUserFromToken(token);
+
+            // Delete the associated refresh token for the user
+            refreshTokenService.deleteByUserId(user.getId());
+
+            refreshTokenRepository.deleteByUser(user.getId());
+
+            // Optionally clear security context
+            SecurityContextHolder.clearContext();
     }
 
     @Override
@@ -154,7 +169,7 @@ public class authServiceImpl implements AuthService {
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(user.getEmail(), passwordReset.getPassword()));
         user.setPassword(passwordEncoder.encode(passwordReset.getPassword()));
         User updatedUser = userRepository.save(user);
-        this.logout(user);
+//        this.logout(user);
         return updatedUser;
     }
 
@@ -163,8 +178,16 @@ public class authServiceImpl implements AuthService {
         String email = jwtUtils.getEmailFromJwtToken(token);
         Optional<User> user = userRepository.findByEmail(email);
         if (user.isEmpty()){
-            throw new ResourceNotFoundException("User not found");
+            throw new ResourceNotFoundException("No session exists for provided token.");
         }
+
+        System.out.println("tokens: " + token);
+        Optional<RefreshToken> refreshToken = refreshTokenRepository.findByUserId(user.get().getId());
+        System.out.println("refreshTokens: " + refreshToken.get());
+        if (refreshToken.get().getExpiryDate().isBefore(Instant.now())) {
+            throw new IllegalArgumentException("JWT Token is expired!");
+        }
+
         return user.get();
     }
 }

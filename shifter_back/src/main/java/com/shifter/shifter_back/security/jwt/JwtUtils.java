@@ -1,10 +1,12 @@
 package com.shifter.shifter_back.security.jwt;
 
 import com.shifter.shifter_back.models.User;
+import com.shifter.shifter_back.repositories.auth.UserRepository;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -12,11 +14,14 @@ import org.springframework.stereotype.Component;
 import java.security.Key;
 import java.time.Instant;
 import java.util.Date;
-import java.util.HashMap;
 
 @Component
 @Slf4j
+@RequiredArgsConstructor
 public class JwtUtils {
+    private final UserRepository userRepository;
+
+
     @Value("${token.signing.key}")
     private String jwtSecret;
     @Value("${token.signing.expiration}")
@@ -86,7 +91,7 @@ public class JwtUtils {
 
     public boolean validateJwtToken(String authToken) {
         try {
-            Jwts.parserBuilder().setSigningKey(key()).build().parseClaimsJwt(authToken);
+            Jwts.parserBuilder().setSigningKey(key()).build().parseClaimsJws(authToken);
             return true;
         } catch (MalformedJwtException e) {
             log.error("Invalid Jwt signature: {}", e.getMessage());
