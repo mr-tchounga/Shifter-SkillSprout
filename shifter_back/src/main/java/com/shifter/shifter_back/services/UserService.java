@@ -48,7 +48,7 @@
 //    public User addEntity(User authUser, User user) {
 //        try {
 //            user.setCreatedAt(Calendar.getInstance().getTime());
-//            user.setCreatedBy(authUser.getCreatedBy());
+//            user.setCreatedBy(authUser.getId());
 //            return userRepository.save(user);
 //        } catch (Exception e) {
 //            throw new RuntimeException("Error adding new user: " + e.getMessage(), e);

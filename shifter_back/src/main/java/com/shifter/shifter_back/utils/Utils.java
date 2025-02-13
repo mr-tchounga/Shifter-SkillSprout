@@ -4,13 +4,13 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
 import lombok.AllArgsConstructor;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Repository;
 
 import java.lang.reflect.Field;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.StringJoiner;
+import java.util.*;
+import java.util.function.Predicate;
 
 @Component
 @AllArgsConstructor
@@ -45,62 +45,7 @@ public class Utils {
                 System.out.println(e.getMessage());
             }
         }
+        System.out.println("nonNullProperties: " + nonNullProperties);
         return nonNullProperties;
-    }
-
-    /**
-     * Find all entities based on dynamically built JPQL query.
-     */
-    public <T> List<T> findAllByCustomQuery(Map<String, Object> queryParams, Class<T> entityClass) {
-        // Start building JPQL query
-        String entityName = entityClass.getSimpleName(); // Assume entity class name matches table name
-        StringBuilder jpql = new StringBuilder("SELECT e FROM " + entityName + " e WHERE ");
-
-        // Dynamically build query conditions
-        StringJoiner conditions = new StringJoiner(" AND ");
-        for (Map.Entry<String, Object> entry : queryParams.entrySet()) {
-            String fieldName = entry.getKey();
-            Object fieldValue = entry.getValue();
-
-            if (fieldValue instanceof String) {
-                conditions.add("LOWER(e." + fieldName + ") LIKE LOWER(CONCAT('%', :" + fieldName + ", '%'))");
-            } else if (fieldValue.getClass().isAnnotationPresent(Entity.class)) {
-                // Assume nested entity; query on its 'id' field
-                conditions.add("e." + fieldName + ".id = :" + fieldName + "Id");
-            } else {
-                conditions.add("e." + fieldName + " = :" + fieldName);
-            }
-        }
-
-        // Append conditions to the JPQL query
-        jpql.append(conditions);
-
-        // Create a Query object
-        Query query = entityManager.createQuery(jpql.toString(), entityClass);
-
-        // Set query parameters
-        for (Map.Entry<String, Object> entry : queryParams.entrySet()) {
-            String fieldName = entry.getKey();
-            Object fieldValue = entry.getValue();
-
-            if (fieldValue instanceof String) {
-                query.setParameter(fieldName, fieldValue);
-            } else if (fieldValue.getClass().isAnnotationPresent(Entity.class)) {
-                // Use the 'id' field of the nested entity
-                try {
-                    Field idField = fieldValue.getClass().getDeclaredField("id");
-                    idField.setAccessible(true);
-                    Object idValue = idField.get(fieldValue);
-                    query.setParameter(fieldName + "Id", idValue);
-                } catch (NoSuchFieldException | IllegalAccessException e) {
-                    System.out.println(e.getMessage());
-                }
-            } else {
-                query.setParameter(fieldName, fieldValue);
-            }
-        }
-
-        // Execute query and return results
-        return query.getResultList();
     }
 }

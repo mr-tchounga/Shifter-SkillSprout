@@ -1,21 +1,19 @@
 package com.shifter.shifter_back.services;
 
-import com.shifter.shifter_back.models.Category;
 import com.shifter.shifter_back.models.Question;
+import com.shifter.shifter_back.models.Category;
 import com.shifter.shifter_back.models.User;
-import com.shifter.shifter_back.repositories.CategoryRepository;
 import com.shifter.shifter_back.repositories.QuestionRepository;
 import com.shifter.shifter_back.utils.Utils;
-import jakarta.persistence.EntityNotFoundException;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.Predicate;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.lang.reflect.Field;
-import java.util.Calendar;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 @Transactional
@@ -24,57 +22,45 @@ public class QuestionService implements EntityInterface<Question> {
     private final QuestionRepository questionRepository;
     private Utils utils;
 
-    private CategoryService categoryService;
-
-
     @Override
-    public Optional<Question> findEntityById(Long id) {
+    public Optional<Question> findEntityById(User user, Long id) {
         Question question = new Question();
         question.setId(id);
+        question.setVisible(true);
         Map<String, Object> nonNullElements = utils.getNonNullProperties(Question.class, question);
-        List<Question> categories = utils.findAllByCustomQuery(nonNullElements, Question.class);
+        List<Question> categories = findFilterEntity(user, question);
         return categories.isEmpty() ? Optional.empty() : Optional.of(categories.get(0));
     }
 
     @Override
     public List<Question> findAllEntity(User user) {
         Question question = new Question();
-        Map<String, Object> nonNullElements = utils.getNonNullProperties(Question.class, question);
-        return utils.findAllByCustomQuery(nonNullElements, Question.class);
+        question.setVisible(true);
+        return findFilterEntity(user, question);
     }
 
     @Override
     public List<Question> findFilterEntity(User user, Question question) {
-        question.setVisible(true);
+        question.setCreatedBy(user.getId());
         Map<String, Object> nonNullElements = utils.getNonNullProperties(Question.class, question);
 
-        // Retrieve category
-        if (nonNullElements.containsKey("category")) {
-            Optional<Category> category = categoryService.findEntityById(question.getCategory().getId());
-            if (category.isEmpty()) {
-                throw new EntityNotFoundException("Category not found for ID: " + question.getCategory().getId());
+        return questionRepository.findAll((root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            for (Map.Entry<String, Object> entry : nonNullElements.entrySet()) {
+                String fieldName =entry.getKey();
+                Object  fieldValue = entry.getValue();
+
+                predicates.add(criteriaBuilder.equal(root.get(fieldName), fieldValue));
             }
-            nonNullElements.replace("category", category.get());
-        }
-        return utils.findAllByCustomQuery(nonNullElements, Question.class);
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        });
     }
 
     @Override
     public Question addEntity(User user, Question question) {
         try {
             question.setCreatedAt(Calendar.getInstance().getTime());
-            question.setCreatedBy(user.getCreatedBy());
-            Map<String, Object> nonNullElements = utils.getNonNullProperties(Question.class, question);
-            // Retrieve category
-            if (nonNullElements.containsKey("category")) {
-                Optional<Category> category = categoryService.findEntityById(question.getCategory().getId());
-                if (category.isEmpty()) {
-                    throw new EntityNotFoundException("Category not found for ID: " + question.getCategory().getId());
-                }
-                nonNullElements.replace("category", category.get());
-            } else {
-                throw new EntityNotFoundException("Category not specified");
-            }
+            question.setCreatedBy(user.getId());
             return questionRepository.save(question);
         } catch (Exception e) {
             throw new RuntimeException("Error adding new question: " + e.getMessage(), e);
@@ -83,21 +69,12 @@ public class QuestionService implements EntityInterface<Question> {
 
     @Override
     public Question updateEntity(User user, Question question) {
-        Optional<Question> previousElement = findEntityById(question.getId());
+        Optional<Question> previousElement = findEntityById(user, question.getId());
 
         if (previousElement.isPresent()) {
             previousElement.get().setUpdatedAt(Calendar.getInstance().getTime());
             previousElement.get().setUpdatedBy(user.getId());
             Map<String, Object> nonNullElements = utils.getNonNullProperties(Question.class, question);
-
-            // Retrieve category
-            if (nonNullElements.containsKey("category")) {
-                Optional<Category> category = categoryService.findEntityById(question.getCategory().getId());
-                if (category.isEmpty()) {
-                    throw new EntityNotFoundException("Category not found for ID: " + question.getCategory().getId());
-                }
-                nonNullElements.replace("category", category.get());
-            }
 
             nonNullElements.forEach((fieldName, value) -> {
                 try {

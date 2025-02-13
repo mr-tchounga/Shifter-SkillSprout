@@ -181,9 +181,7 @@ public class authServiceImpl implements AuthService {
             throw new ResourceNotFoundException("No session exists for provided token.");
         }
 
-        System.out.println("tokens: " + token);
         Optional<RefreshToken> refreshToken = refreshTokenRepository.findByUserId(user.get().getId());
-        System.out.println("refreshTokens: " + refreshToken.get());
         if (refreshToken.get().getExpiryDate().isBefore(Instant.now())) {
             throw new IllegalArgumentException("JWT Token is expired!");
         }

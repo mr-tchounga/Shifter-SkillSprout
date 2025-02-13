@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface EntityInterface<T> {
-    Optional<T> findEntityById(Long id);
+    Optional<T> findEntityById(User user, Long id);
     List<T> findAllEntity(User user);
     List<T> findFilterEntity(User user, T entity);
     T addEntity(User user, T entity);

@@ -4,6 +4,7 @@ import com.shifter.shifter_back.models.Category;
 import com.shifter.shifter_back.models.User;
 import com.shifter.shifter_back.services.EntityInterface;
 import com.shifter.shifter_back.services.auth.AuthService;
+import jakarta.websocket.server.PathParam;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,7 +23,7 @@ public class CategoryController {
         User currentUser = authService.getCurrentUserFromToken(jwtToken);
 
         if (id != null) {
-            return categoryEntityInterface.findEntityById(id);
+            return categoryEntityInterface.findEntityById(currentUser, id);
         }
         return  categoryEntityInterface.findAllEntity(currentUser);
     }
@@ -34,7 +35,7 @@ public class CategoryController {
 
         if (category != null) {
             if (category.getId() != null) {
-                return categoryEntityInterface.findEntityById(category.getId());
+                return categoryEntityInterface.findEntityById(currentUser, category.getId());
             }
             return categoryEntityInterface.findFilterEntity(currentUser, category);
         }
@@ -57,8 +58,8 @@ public class CategoryController {
         return  categoryEntityInterface.updateEntity(currentUser, category);
     }
 
-    @DeleteMapping("/{id}")
-    public Object removeCategory(@PathVariable Long id, @RequestHeader("Authorization") String token) {
+    @DeleteMapping()
+    public Object removeCategory(@RequestParam Long id, @RequestHeader("Authorization") String token) {
         String jwtToken = token.substring(7);
         User currentUser = authService.getCurrentUserFromToken(jwtToken);
 
